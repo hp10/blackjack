@@ -14,7 +14,8 @@ def card_list_to_name(card_list):
 def card_list_to_value(card_list):
     value = 0
     for i in card_list:
-        value += i[1][1]
+        if i[2] == False: # Checks if the card has the face down property
+            value += i[1][1]
     return value
 def draw_card():
     global deck_of_cards
@@ -24,10 +25,11 @@ def draw_card():
 def hand_list_to_text(hand_list):
     text = ''
     for i in range(len(hand_list)):
-        if len(hand_list) - 1 == i:
-            text += hand_list[i][1][0] + ' of ' + hand_list[i][0]
-        else:
-            text += hand_list[i][1][0] + ' of ' + hand_list[i][0] + ', '
+        if hand_list[i][2] == False: # Chceks if the hand has the face down property
+            if len(hand_list) - 1 == i:
+                text += hand_list[i][1][0] + ' of ' + hand_list[i][0]
+            else:
+                text += hand_list[i][1][0] + ' of ' + hand_list[i][0] + ', '
     return text
 
 def player_win_lose_push(player_hand, dealer_hand):
@@ -55,10 +57,10 @@ def player_win_lose_push(player_hand, dealer_hand):
         condition = "Push"
     else:
         outcome = 'Unkown'
-        outcome = 'Error, no value assigned'
+        condition = 'Error, no value assigned'
     return (outcome, condition)
 
-def print_hand(player_hand, dealer_hand):
+def print_hand(player_hand, dealer_hand, show_face_down = False):
     print(f"""\
 ----------------
 Dealer hand: \u001b[1;4m{card_list_to_value(dealer_hand)}\u001b[0m
@@ -77,14 +79,29 @@ def game(betting_enabled = False):
     player_hand.append(draw_card())
     dealer_hand.append(draw_card())
     # End hand creations
-    print_hand(player_hand, dealer_hand)
-    print(player_win_lose_push(player_hand, dealer_hand)[0])
-    # while True: # Only purpose is to prevent player from entering a character not 'h' or 's'
-    #         hit_or_stand = input('Hit or stand (H/S): ').lower()
-    #         if hit_or_stand == 'h' or hit_or_stand == 's':
-    #             break
-    #         else:
-    #             print('\x1b[1F\x1b[2K', end='') # Looks crazy but just ANSII code to clear previous line
-        
-    
+    while True: # Shoe loop
+        print_hand(player_hand, dealer_hand)
+        # print(player_win_lose_push(player_hand, dealer_hand)[0])
+        while True: # Only purpose is to prevent player from entering a character not 'h' or 's'
+                hit_or_stand = input('Hit or stand (H/S): ').lower()
+                if hit_or_stand == 'h' or hit_or_stand == 's':
+                    break
+                else:
+                    print('\x1b[1F\x1b[2K', end='') # Looks crazy but just ANSII code to clear previous line
+            
+        if hit_or_stand == 's':
+            if card_list_to_value(dealer_hand) < 17 and card_list_to_value(dealer_hand) <= card_list_to_value(player_hand):
+                while card_list_to_value(dealer_hand) < 17 and card_list_to_value(dealer_hand) <= card_list_to_value(player_hand):
+                    dealer_hand.append(draw_card())
+                print_hand(player_hand, dealer_hand)
+
+            print(player_win_lose_push(player_hand, dealer_hand)[0])
+            break
+        elif hit_or_stand == 'h':
+            player_hand.append(draw_card())
+            if card_list_to_value(player_hand) > 21:
+                print_hand(player_hand, dealer_hand)
+                print(player_win_lose_push(player_hand, dealer_hand)[0])
+                break
+
 game()
